@@ -1,0 +1,40 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+
+\title{Quality assurance report for {{assay}}}
+\author{Quality assurance pipeline}
+
+\begin{document}
+\maketitle
+
+\section*{Purpose}
+This report summarises submitted quality assurance results for the recorded site, instrument, and cycle set. It is intended for method review and report-generation verification only.
+
+\section*{Recorded details}
+\begin{itemize}
+  \item Site: {{site}}
+  \item Device type: {{devicetype}}
+  \item Device ID: {{deviceid}}
+  \item Assay: {{assay}}
+  \item Cycles: {{cycle1}} and {{cycle2}}
+  \item Date/time values:
+  \begin{itemize}
+{{datetimes}}
+  \end{itemize}
+  \item Units: {{units}}
+\end{itemize}
+
+\section*{Summary statistics}
+{{cycle1}} mean: {{value1}}\,{{units}}\\
+{{cycle1}} allowable range: {{lower1}}--{{upper1}}\,{{units}}\\
+{{cycle2}} mean: {{value2}}\,{{units}}\\
+{{cycle2}} allowable range: {{lower2}}--{{upper2}}\,{{units}}
+
+\section*{Cycle values}
+{{cycle1}}: {{group1values}}\\
+{{cycle2}}: {{group2values}}
+
+\section*{Tabulated values}
+{{table}}
+
+\end{document}

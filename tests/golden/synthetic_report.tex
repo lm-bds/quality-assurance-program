@@ -1,0 +1,49 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+
+\title{Quality assurance report for CRP}
+\author{Quality assurance pipeline}
+
+\begin{document}
+\maketitle
+
+\section*{Purpose}
+This report summarises submitted quality assurance results for the recorded site, instrument, and cycle set. It is intended for method review and report-generation verification only.
+
+\section*{Recorded details}
+\begin{itemize}
+  \item Site: Site \{Alpha\}\textbackslash{}Path
+  \item Device type: Abbott
+  \item Device ID: DEV\_1
+  \item Assay: CRP
+  \item Cycles: Cycle-1 and Cycle-2
+  \item Date/time values:
+  \begin{itemize}
+  \item 2026-01-01T00:00:00Z
+  \item 2026-01-01T00:05:00Z
+  \item 2026-01-02T00:00:00Z
+  \item 2026-01-02T00:05:00Z
+  \end{itemize}
+  \item Units: mg/L
+\end{itemize}
+
+\section*{Summary statistics}
+Cycle-1 mean: 11\,mg/L\\
+Cycle-1 allowable range: 10.45--11.55\,mg/L\\
+Cycle-2 mean: 12.5\,mg/L\\
+Cycle-2 allowable range: 11.875--13.125\,mg/L
+
+\section*{Cycle values}
+Cycle-1: 10.5, 11.5\\
+Cycle-2: 12, 13
+
+\section*{Tabulated values}
+\begin{tabular}{lr}
+Cycle & Value \\ \hline
+Cycle-1 & 10.5 \\
+Cycle-2 & 12 \\
+Cycle-1 & 11.5 \\
+Cycle-2 & 13 \\
+\end{tabular}
+
+\end{document}
