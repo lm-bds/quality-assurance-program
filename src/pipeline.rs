@@ -370,7 +370,18 @@ fn mean(values: &[f64]) -> Result<f64, ReportError> {
             "cannot calculate a mean for an empty cycle",
         ));
     }
-    Ok(values.iter().sum::<f64>() / values.len() as f64)
+    let sum = values.iter().try_fold(0.0_f64, |sum, value| {
+        let next = sum + value;
+        next.is_finite().then_some(next).ok_or_else(|| {
+            ReportError::validation("numeric aggregate overflowed to a non-finite value")
+        })
+    })?;
+    let mean = sum / values.len() as f64;
+    if mean.is_finite() {
+        Ok(mean)
+    } else {
+        Err(ReportError::validation("numeric mean is non-finite"))
+    }
 }
 
 #[derive(Debug)]

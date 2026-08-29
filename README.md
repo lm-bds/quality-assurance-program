@@ -45,6 +45,14 @@ Sites and cycle labels are ordered deterministically. Measurement rows retain th
 - Report text escapes user-controlled LaTeX content, including backslash, braces, dollar, ampersand, hash, underscore, percent, tilde, and caret
 - Template loading is embedded at compile time; the current working directory does not matter
 
+## Supported runtime
+
+The repository targets stable Rust with the Rust 2021 edition, as declared by `Cargo.toml` and the verification workflow. Report generation writes LaTeX source; compiling that source to PDF requires a separately installed LaTeX distribution, which this project does not provide or pin.
+
+## Release policy
+
+This project has no tags or releases in this local release-hygiene pass. A future release requires a clean clone, passing CI and the verification commands below before creating a tag; version numbers are changed only as part of an intentional release.
+
 ## Verification
 
 ```bash

@@ -11,13 +11,10 @@ pub fn generate_reports(
     output_dir: &Path,
 ) -> Result<Vec<GeneratedReport>, ReportError> {
     let dataset = crate::pipeline::load_csv(csv_path)?;
-    fs::create_dir_all(output_dir)
-        .map_err(|_| ReportError::io("unable to create output directory"))?;
-
     let mut used_names = BTreeSet::new();
     let mut reports = Vec::with_capacity(dataset.sites.len());
     for site in &dataset.sites {
-        let contents = render_site_report(&dataset, site);
+        let contents = render_site_report(&dataset, site)?;
         let file_name =
             unique_report_filename(&dataset.assay, &dataset.cycles, site, &mut used_names);
         let path = output_dir.join(&file_name);
@@ -27,6 +24,9 @@ pub fn generate_reports(
             contents,
         });
     }
+
+    fs::create_dir_all(output_dir)
+        .map_err(|_| ReportError::io("unable to create output directory"))?;
 
     for report in &reports {
         if report
@@ -76,10 +76,13 @@ pub fn render_report_bytes(dataset: &ValidatedDataset) -> Result<Vec<u8>, Report
         .sites
         .first()
         .ok_or_else(|| ReportError::validation("CSV contains no reportable sites"))?;
-    Ok(render_site_report(dataset, site))
+    render_site_report(dataset, site)
 }
 
-fn render_site_report(dataset: &ValidatedDataset, site: &SiteReportInput) -> Vec<u8> {
+fn render_site_report(
+    dataset: &ValidatedDataset,
+    site: &SiteReportInput,
+) -> Result<Vec<u8>, ReportError> {
     let template = include_str!("../Template/template.tex");
     let cycle1 = &dataset.cycles[0];
     let cycle2 = &dataset.cycles[1];
@@ -104,20 +107,20 @@ fn render_site_report(dataset: &ValidatedDataset, site: &SiteReportInput) -> Vec
         ("{{value1}}", format_number(site.cycle_means[0])),
         (
             "{{lower1}}",
-            format_number(lower_bound(dataset.assay.clone(), dataset.cycle_means[0])),
+            format_number(lower_bound(dataset.assay.clone(), dataset.cycle_means[0])?),
         ),
         (
             "{{upper1}}",
-            format_number(upper_bound(dataset.assay.clone(), dataset.cycle_means[0])),
+            format_number(upper_bound(dataset.assay.clone(), dataset.cycle_means[0])?),
         ),
         ("{{value2}}", format_number(site.cycle_means[1])),
         (
             "{{lower2}}",
-            format_number(lower_bound(dataset.assay.clone(), dataset.cycle_means[1])),
+            format_number(lower_bound(dataset.assay.clone(), dataset.cycle_means[1])?),
         ),
         (
             "{{upper2}}",
-            format_number(upper_bound(dataset.assay.clone(), dataset.cycle_means[1])),
+            format_number(upper_bound(dataset.assay.clone(), dataset.cycle_means[1])?),
         ),
         ("{{units}}", escape_tex(&site.units)),
         ("{{group1values}}", group1_values),
@@ -132,7 +135,7 @@ fn render_site_report(dataset: &ValidatedDataset, site: &SiteReportInput) -> Vec
         filled = filled.replace(needle, &replacement);
     }
 
-    filled.into_bytes()
+    Ok(filled.into_bytes())
 }
 
 fn render_table(cycles: &[String; 2], cycle_values: &[Vec<f64>; 2]) -> String {
@@ -234,12 +237,23 @@ fn unique_report_filename(
     }
 }
 
-fn lower_bound(assay: Assay, mean: f64) -> f64 {
-    allowable_range(mean, assay).0
+fn lower_bound(assay: Assay, mean: f64) -> Result<f64, ReportError> {
+    Ok(checked_allowable_range(mean, assay)?.0)
 }
 
-fn upper_bound(assay: Assay, mean: f64) -> f64 {
-    allowable_range(mean, assay).1
+fn upper_bound(assay: Assay, mean: f64) -> Result<f64, ReportError> {
+    Ok(checked_allowable_range(mean, assay)?.1)
+}
+
+fn checked_allowable_range(mean: f64, assay: Assay) -> Result<(f64, f64), ReportError> {
+    let range = allowable_range(mean, assay);
+    if range.0.is_finite() && range.1.is_finite() {
+        Ok(range)
+    } else {
+        Err(ReportError::validation(
+            "allowable numeric range is non-finite",
+        ))
+    }
 }
 
 pub fn allowable_range(mean: f64, assay: Assay) -> (f64, f64) {
@@ -271,8 +285,8 @@ mod tests {
 
     #[test]
     fn mean_range_uses_semantically_ordered_bounds() {
-        assert_eq!(lower_bound(Assay::CRP, 100.0), 95.0);
-        assert_eq!(upper_bound(Assay::CRP, 100.0), 105.0);
+        assert_eq!(lower_bound(Assay::CRP, 100.0).unwrap(), 95.0);
+        assert_eq!(upper_bound(Assay::CRP, 100.0).unwrap(), 105.0);
     }
 
     #[test]

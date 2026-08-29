@@ -86,6 +86,36 @@ fn nonfinite_values_are_rejected() {
 }
 
 #[test]
+fn finite_extreme_aggregates_are_rejected_without_reports() {
+    let dir = unique_dir("aggregate-overflow");
+    let csv = write_csv(
+        &dir,
+        "extreme.csv",
+        "site,device_type,device_id,test,cycle,datetime,value,units\nSite A,Abbott,DEV-1,CRP,Cycle-1,2026-01-01T00:00:00Z,1e308,mg/L\nSite A,Abbott,DEV-1,CRP,Cycle-1,2026-01-01T00:05:00Z,1e308,mg/L\nSite A,Abbott,DEV-1,CRP,Cycle-2,2026-01-02T00:00:00Z,1e308,mg/L\nSite A,Abbott,DEV-1,CRP,Cycle-2,2026-01-02T00:05:00Z,1e308,mg/L\n",
+    );
+    let output_dir = dir.join("reports");
+
+    let error = generate_reports(&csv, &output_dir).unwrap_err();
+    assert!(error.to_string().contains("finite"));
+    assert!(!output_dir.exists());
+}
+
+#[test]
+fn finite_extreme_peer_ranges_are_rejected_without_reports() {
+    let dir = unique_dir("range-overflow");
+    let csv = write_csv(
+        &dir,
+        "extreme-range.csv",
+        "site,device_type,device_id,test,cycle,datetime,value,units\nSite A,Abbott,DEV-1,CRP,Cycle-1,2026-01-01T00:00:00Z,1.75e308,mg/L\nSite A,Abbott,DEV-1,CRP,Cycle-2,2026-01-02T00:00:00Z,1.75e308,mg/L\n",
+    );
+    let output_dir = dir.join("reports");
+
+    let error = generate_reports(&csv, &output_dir).unwrap_err();
+    assert!(error.to_string().contains("range"));
+    assert!(!output_dir.exists());
+}
+
+#[test]
 fn header_only_csv_is_rejected() {
     let dir = unique_dir("header-only");
     let csv = write_csv(
@@ -134,6 +164,19 @@ fn inconsistent_site_metadata_is_rejected() {
     );
     let err = load_csv(&csv).unwrap_err();
     assert!(err.to_string().contains("metadata"));
+}
+
+#[test]
+fn report_template_uses_a_fixed_date_for_reproducible_rendering() {
+    let report =
+        String::from_utf8(render_report_bytes(&load_csv_from_synthetic()).unwrap()).unwrap();
+    assert!(report.contains(r"\date{}"));
+}
+
+fn load_csv_from_synthetic() -> qapsimple::models::ValidatedDataset {
+    let dir = unique_dir("template-date");
+    let csv = write_csv(&dir, "input.csv", &synthetic_csv());
+    load_csv(&csv).unwrap()
 }
 
 #[test]
